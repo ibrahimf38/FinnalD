@@ -771,7 +771,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
   final _formKey = GlobalKey<FormState>();
   final _pageController = PageController();
   final _scrollController = ScrollController();
-  final ActiviteService _activiteService = ActiviteService(); // Service pour API
+  final ActiviteService _activiteService = ActiviteService();
 
   final TextEditingController nomController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
@@ -803,6 +803,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      print('ℹ️ Tentative de sélection d\'image...');
       final pickedFile = await ImagePicker().pickImage(
         source: source,
         maxWidth: 1920,
@@ -817,11 +818,13 @@ class _AddActivityPageState extends State<AddActivityPage> {
             _webImage = bytes;
             _selectedImage = null;
           });
+          print('✅ Image sélectionnée (Web)');
         } else {
           setState(() {
             _selectedImage = File(pickedFile.path);
             _webImage = null;
           });
+          print('✅ Image sélectionnée (Mobile) : ${pickedFile.path}');
         }
 
         if (mounted) {
@@ -832,6 +835,8 @@ class _AddActivityPageState extends State<AddActivityPage> {
             ),
           );
         }
+      } else {
+        print('❌ Sélection d\'image annulée.');
       }
     } catch (e) {
       if (mounted) {
@@ -842,10 +847,12 @@ class _AddActivityPageState extends State<AddActivityPage> {
           ),
         );
       }
+      print('⚠️ Erreur de sélection d\'image: $e');
     }
   }
 
   void _nextStep() {
+    print('➡️ Passage à l\'étape suivante. Étape actuelle: $_currentStep');
     if (_currentStep == 0 && !_validateStep1()) return;
     if (_currentStep == 1 && !_validateStep2()) return;
 
@@ -859,6 +866,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
   }
 
   void _prevStep() {
+    print('⬅️ Retour à l\'étape précédente. Étape actuelle: $_currentStep');
     if (_currentStep > 0) {
       setState(() => _currentStep--);
       _pageController.previousPage(
@@ -869,6 +877,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
   }
 
   bool _validateStep1() {
+    print('🔍 Démarrage de la validation de l\'étape 1...');
     bool isValid = true;
     List<String> errors = [];
 
@@ -889,20 +898,26 @@ class _AddActivityPageState extends State<AddActivityPage> {
       isValid = false;
     }
 
-    if (!isValid && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreurs: ${errors.join(', ')}'),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+    if (!isValid) {
+      print('❌ Validation de l\'étape 1 échouée. Erreurs: ${errors.join(', ')}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreurs: ${errors.join(', ')}'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } else {
+      print('✅ Validation de l\'étape 1 réussie.');
     }
 
     return isValid;
   }
 
   bool _validateStep2() {
+    print('🔍 Démarrage de la validation de l\'étape 2...');
     bool isValid = true;
     List<String> errors = [];
 
@@ -922,21 +937,137 @@ class _AddActivityPageState extends State<AddActivityPage> {
       isValid = false;
     }
 
-    if (!isValid && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreurs: ${errors.join(', ')}'),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+    if (!isValid) {
+      print('❌ Validation de l\'étape 2 échouée. Erreurs: ${errors.join(', ')}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreurs: ${errors.join(', ')}'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } else {
+      print('✅ Validation de l\'étape 2 réussie.');
     }
 
     return isValid;
   }
 
+  // void _submit() async {
+  //   print('➡️ Tentative de soumission du formulaire final...');
+  //   if (!_formKey.currentState!.validate()) {
+  //     print('❌ Formulaire invalide. Annulation de la soumission.');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Veuillez corriger les erreurs dans le formulaire.'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
+  //
+  //   if (_selectedImage == null && _webImage == null) {
+  //     print('⚠️ Aucune image sélectionnée. Annulation.');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Veuillez sélectionner une image.'),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //     return;
+  //   }
+  //
+  //   if (_selectedPayment == null) {
+  //     print('⚠️ Aucun mode de paiement sélectionné. Annulation.');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Veuillez sélectionner un mode de paiement.'),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //     return;
+  //   }
+  //
+  //   setState(() => _isSubmitting = true);
+  //   print('⏳ État de soumission mis à jour sur : true');
+  //
+  //   try {
+  //     // Préparer les données pour l'API
+  //     print('📦 Préparation des données pour l\'envoi...');
+  //     // Le code que vous avez fourni encode l'image en Base64.
+  //     String? imageData;
+  //     if (_webImage != null) {
+  //       imageData = 'data:image/png;base64,${base64Encode(_webImage!)}';
+  //     } else if (_selectedImage != null) {
+  //       final bytes = await _selectedImage!.readAsBytes();
+  //       imageData = 'data:image/png;base64,${base64Encode(bytes)}';
+  //     }
+  //     print('🖼️ Image encodée en Base64. Taille du string: ${imageData?.length}');
+  //
+  //     final activiteData = {
+  //       'nom': nomController.text.trim(),
+  //       'location': locationController.text.trim(),
+  //       'latitude': latitudeController.text.trim().isNotEmpty
+  //           ? double.tryParse(latitudeController.text.trim())
+  //           : null,
+  //       'longitude': longitudeController.text.trim().isNotEmpty
+  //           ? double.tryParse(longitudeController.text.trim())
+  //           : null,
+  //       'phone': phoneController.text.trim(),
+  //       'prix': prixController.text.trim().isNotEmpty
+  //           ? double.tryParse(prixController.text.trim())
+  //           : null,
+  //       'email': emailController.text.trim().isNotEmpty
+  //           ? emailController.text.trim()
+  //           : null,
+  //       'description': descriptionController.text.trim(),
+  //       'payment': _selectedPayment!,
+  //       'category': _selectedCategory!,
+  //       'image': imageData!,
+  //     };
+  //
+  //     print('📡 Appel de l\'API avec les données...');
+  //     // Appel API
+  //     await _activiteService.addActivite(activiteData);
+  //
+  //     if (!mounted) return;
+  //
+  //     print('✅ Activité ajoutée avec succès !');
+  //     // Message de succès
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Activité ajoutée avec succès !'),
+  //         backgroundColor: Colors.green,
+  //         duration: Duration(seconds: 2),
+  //       ),
+  //     );
+  //
+  //     Navigator.pop(context, activiteData);
+  //
+  //   } catch (e) {
+  //     if (!mounted) return;
+  //
+  //     print('❌ Erreur lors de l\'ajout: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Erreur lors de l\'ajout: ${_getErrorMessage(e.toString())}'),
+  //         backgroundColor: Colors.red,
+  //         duration: const Duration(seconds: 4),
+  //       ),
+  //     );
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isSubmitting = false);
+  //       print('✅ État de soumission mis à jour sur : false');
+  //     }
+  //   }
+  // }
+
   void _submit() async {
     if (!_formKey.currentState!.validate()) {
+      print('❌ Formulaire invalide. Annulation de la soumission.');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez corriger les erreurs dans le formulaire.'),
@@ -947,6 +1078,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
     }
 
     if (_selectedImage == null && _webImage == null) {
+      print('⚠️ Aucune image sélectionnée. Annulation.');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez sélectionner une image.'),
@@ -957,6 +1089,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
     }
 
     if (_selectedPayment == null) {
+      print('⚠️ Aucun mode de paiement sélectionné. Annulation.');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez sélectionner un mode de paiement.'),
@@ -967,9 +1100,11 @@ class _AddActivityPageState extends State<AddActivityPage> {
     }
 
     setState(() => _isSubmitting = true);
+    print('⏳ État de soumission mis à jour sur : true');
 
     try {
-      // Préparer les données pour FormData (compatible avec votre backend)
+      // Préparer les données pour FormData
+      print('📦 Préparation des données pour l\'envoi multipart...');
       final activiteData = {
         'nom': nomController.text.trim(),
         'location': locationController.text.trim(),
@@ -989,16 +1124,17 @@ class _AddActivityPageState extends State<AddActivityPage> {
         'description': descriptionController.text.trim(),
         'payment': _selectedPayment!,
         'category': _selectedCategory!,
-        // Passer les données d'image pour FormData (compatible avec multer)
-        'imageFile': kIsWeb ? null : _selectedImage, // Fichier pour mobile
+        'image': kIsWeb ? null : _selectedImage, // Fichier pour mobile
         'imageBytes': kIsWeb ? _webImage : null,     // Bytes pour web
       };
 
+      print('📡 Appel de l\'API avec FormData...');
       // Appel API avec FormData
       await _activiteService.addActivite(activiteData);
 
       if (!mounted) return;
 
+      print('✅ Activité ajoutée avec succès !');
       // Message de succès
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1008,12 +1144,12 @@ class _AddActivityPageState extends State<AddActivityPage> {
         ),
       );
 
-      // Retourner à la page précédente avec les données
       Navigator.pop(context, activiteData);
 
     } catch (e) {
       if (!mounted) return;
 
+      print('❌ Erreur lors de l\'ajout: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erreur lors de l\'ajout: ${_getErrorMessage(e.toString())}'),
@@ -1024,6 +1160,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        print('✅ État de soumission mis à jour sur : false');
       }
     }
   }
