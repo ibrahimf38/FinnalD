@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   late String baseUrl;
 
-  ApiService() {
+ /* ApiService() {
     // Configuration automatique selon la plateforme
     if (Platform.isAndroid) {
       baseUrl = "http://10.0.2.2:8000"; // Émulateur Android
@@ -15,19 +15,19 @@ class ApiService {
       baseUrl = "http://localhost:8000"; // Desktop/Web
     }
     print('🔧 ApiService initialisé avec baseUrl: $baseUrl');
-  }
+  }*/
 
-  /*ApiService() {
+  ApiService() {
     // Configuration automatique selon la plateforme
     if (Platform.isAndroid) {
-      baseUrl = "http://192.168.1.142:8000"; // Émulateur Android
+      baseUrl = "http://192.168.188.23:8000"; // Émulateur Android
     } else if (Platform.isIOS) {
-      baseUrl = "http://192.168.1.142:8000"; // Émulateur iOS
+      baseUrl = "http://192.168.188.23:8000"; // Émulateur iOS
     } else {
       baseUrl = "http://localhost:8000"; // Desktop/Web
     }
     print('🔧 ApiService initialisé avec baseUrl: $baseUrl');
-  }*/
+  }
 
   // GET avec logs détaillés
   Future<dynamic> getData(String endpoint) async {

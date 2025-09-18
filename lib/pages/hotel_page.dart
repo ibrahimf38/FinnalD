@@ -172,7 +172,10 @@ class _HotelPageState extends State<HotelPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Hôtels Disponibles"),
+        title: const Text(
+            "Hôtels Disponibles",
+             overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
