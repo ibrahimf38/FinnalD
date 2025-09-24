@@ -1461,7 +1461,7 @@ class _AddRestaurantPageState extends State<AddRestaurantPage> {
     {'value': 'moov', 'label': 'Moov Money', 'icon': 'assets/images/moov.png'},
     {'value': 'carte', 'label': 'Carte Visa', 'icon': 'assets/images/banque.png'},
   ];
-
+/*
   Future<void> _pickImage(ImageSource source) async {
     try {
       final picked = await ImagePicker().pickImage(
@@ -1487,7 +1487,58 @@ class _AddRestaurantPageState extends State<AddRestaurantPage> {
     } catch (e) {
       _showSnackBar('Erreur lors de la sélection de l\'image', backgroundColor: Colors.red);
     }
+  }*/
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      print('ℹ️ Tentative de sélection d\'image...');
+      final pickedFile = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        if (kIsWeb) {
+          final bytes = await pickedFile.readAsBytes();
+          setState(() {
+            _webImage = bytes;
+            _selectedImage = null;
+          });
+          print('✅ Image sélectionnée (Web)');
+        } else {
+          setState(() {
+            _selectedImage = File(pickedFile.path);
+            _webImage = null;
+          });
+          print('✅ Image sélectionnée (Mobile) : ${pickedFile.path}');
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image sélectionnée avec succès'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        print('❌ Sélection d\'image annulée.');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la sélection: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      print('⚠️ Erreur de sélection d\'image: $e');
+    }
   }
+
 
   void _showSnackBar(String message, {Color? backgroundColor}) {
     if (!mounted) return;
@@ -1605,16 +1656,29 @@ class _AddRestaurantPageState extends State<AddRestaurantPage> {
   void _submit() async {
     if (!_validateCurrentStep()) return;
 
+    if (_selectedImage == null && _webImage == null) {
+      print('⚠️ Aucune image sélectionnée. Annulation.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez sélectionner une image.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
+
+
     try {
-      String? imageData;
+     /* String? imageData;
       if (_webImage != null) {
         imageData = 'data:image/png;base64,${base64Encode(_webImage!)}';
       } else if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
         imageData = 'data:image/png;base64,${base64Encode(bytes)}';
-      }
+      }*/
 
       final restaurantData = {
         'nom': nomController.text.trim(),
@@ -1630,7 +1694,8 @@ class _AddRestaurantPageState extends State<AddRestaurantPage> {
         'price': priceController.text.trim(),
         'quantity': '0',
         'payment': _selectedPayment!,
-        'image': imageData!,
+        'image': kIsWeb ? null : _selectedImage, // Fichier pour mobile
+        'imageBytes': kIsWeb ? _webImage : null,     // Bytes pour web
         'date_creation': DateTime.now().toIso8601String(),
       };
 
@@ -1913,7 +1978,7 @@ class _AddRestaurantPageState extends State<AddRestaurantPage> {
                           labelText: 'Localisation',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.location_on),
-                          hintText: 'Ex: Lomé, Togo',
+                          hintText: 'Ex: Bamako, Mali',
                         ),
                         validator: (v) => v?.trim().isEmpty == true ? 'Ce champ est requis' : null,
                       ),
@@ -2020,7 +2085,7 @@ class _AddRestaurantPageState extends State<AddRestaurantPage> {
                         labelText: 'Téléphone',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.phone),
-                        hintText: 'Ex: +228 12 34 56 78',
+                        hintText: 'Ex: +223 72 34 56 78',
                       ),
                       keyboardType: TextInputType.phone,
                       validator: (v) {

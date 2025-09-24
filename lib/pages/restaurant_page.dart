@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'dart:convert';
 import 'package:MaliDiscover/api/api_restaurantService.dart';
@@ -52,141 +53,15 @@ class _RestaurantPageState extends State<RestaurantPage> {
     return defaultValue;
   }
 
-
-  // Méthode pour charger les hôtels depuis l'API
-  /*Future<void> _loadRestaurants() async {
-    try {
-      setState(() => _isLoading = true);
-
-      final apiRestaurants = await _restaurantService.getRestaurants();
-
-      setState(() {
-        // Convertir les données API en objets Restaurant
-        restaurants = apiRestaurants.map<restaurant>((data) {
-          if (data == null || data is! Map<String, dynamic>) {
-            // fallback si les données sont invalides
-            return restaurant(
-              id_restaurant: 'unknown',
-              id_gestionnaire: 'unknown',
-              nom: 'Restaurant inconnu',
-              adresse: 'Adresse non disponible',
-              description: 'Description non disponible',
-              email: 'Non disponible',
-              localisation: 'Adresse non disponible',
-              ownerFirstName: 'N/A',
-              ownerLastName: 'N/A',
-              phone: 'N/A',
-              plat: 'Standard',
-              price: '0',
-              quantity: 1,
-              payment: 'N/A',
-              image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-            );
-          }
-
-          return restaurant(
-            id_restaurant: _getSafeString(data, 'id_restaurant', _getSafeString(data, 'id', 'unknown')),
-            id_gestionnaire: _getSafeString(data, 'id_gestionnaire', 'unknown'),
-            nom: _getSafeString(data, 'nom', 'Nom non disponible'),
-            adresse: _getSafeString(data, 'adresse', 'Adresse non disponible'),
-            description: _getSafeString(data, 'description', 'Description non disponible'),
-            email: _getSafeString(data, 'email', 'Non disponible'),
-            localisation: _getSafeString(data, 'localisation', 'Adresse non disponible'),
-            ownerFirstName: _getSafeString(data, 'ownerFirstName', 'N/A'),
-            ownerLastName: _getSafeString(data, 'ownerLastName', 'N/A'),
-            phone: _getSafeString(data, 'phone', 'N/A'),
-            plat: _getSafeString(data, 'plat', 'Standard'),
-            price: _getSafeString(data, 'price', '0'),
-            quantity: _getSafeInt(data, 'quantity', 1),
-            payment: _getSafeString(data, 'payment', 'N/A'),
-            image: _getSafeString(data, 'image', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4'),
-          );
-        }).toList();
-
-        _isLoading = false;
-
-        print('✨ Données transformées en Restaurant avec succès !');
-        print('📝 Nombre de restaurants: ${restaurants.length}');
-        if (restaurants.isNotEmpty) {
-          print('🏨 Premier restaurant: ${restaurants[0].nom}');
-        }
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Pas de connexion backend. Données de test affichées.'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
-
-      // Fallback avec un ou deux restaurants
-      setState(() {
-        restaurants = [
-          restaurant(
-            id_restaurant: '1',
-            id_gestionnaire: '1',
-            nom: 'Restaurant Maria',
-            adresse: 'Bamako',
-            description: 'Restaurant traditionnel',
-            email: 'maria@restaurant.com',
-            localisation: 'Bamako, Mali',
-            ownerFirstName: 'Maria',
-            ownerLastName: 'Diakité',
-            phone: '+223 12345678',
-            plat: 'Plat du jour',
-            price: '2500',
-            quantity: 1,
-            payment: 'Cash',
-            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-          ),
-        ];
-        _isLoading = false;
-      });
-    }
-  }*/
-
   Future<void> _loadRestaurants() async {
     try {
       setState(() => _isLoading = true);
 
-      /*print('🌐 URL de base utilisée: ${_hotelService._api.baseUrl}');*/
-
       final apiRestaurants = await _restaurantService.getRestaurants();
 
-      if (apiRestaurants.isNotEmpty) {
-        //print('🏨 Premier hôtel reçu: ${apiHotels[0]}');
-        //print('🔑 Clés disponibles dans le premier hôtel: ${(apiHotels[0] as Map).keys.toList()}');
-      }
-
       setState(() {
-        // Convertir les données API au format attendu par votre interface
-        restaurants = apiRestaurants.map<Map<String, dynamic>>((restaurant) {
-          // Vérifier que hotel n'est pas null et est bien un Map
-          if (restaurant == null || restaurant is! Map<String, dynamic>) {
-            return {
-              'id_restaurant': 'unknown',
-              'id_gestionnaire': 'unknown',
-              'nom': 'Restaurant inconnu',
-              'adresse': 'Adresse non disponible',
-              'description': 'Description non disponible',
-              'email': 'Non disponible',
-              'localisation': 'Adresse non disponible',
-              'ownerFirstName': 'N/A',
-              'ownerLastName': 'N/A',
-              'phone': 'N/A',
-              'plat': 'Standard',
-              'price': '0',
-              'quantity': 1,
-              'payment': 'N/A',
-              'image': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-            };
-          }
-
+        // Filtrer les données pour s'assurer qu'elles sont de type Map<String, dynamic>
+        restaurants = apiRestaurants.where((restaurant) => restaurant is Map<String, dynamic>).map<Map<String, dynamic>>((restaurant) {
           return {
             'id_restaurant': _getSafeString(restaurant, 'id_restaurant', _getSafeString(restaurant, 'id', 'unknown')),
             'id_gestionnaire': _getSafeString(restaurant, 'id_gestionnaire', 'unknown'),
@@ -206,18 +81,11 @@ class _RestaurantPageState extends State<RestaurantPage> {
           };
         }).toList();
 
-        print('✨ Données transformées avec succès!');
-        print('📝 Nombre d\'hôtels traités: ${restaurants.length}');
-        if (restaurants.isNotEmpty) {
-          print('🏨 Premier hôtel après transformation: ${restaurants[0]}');
-        }
-
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
 
-      // Optionnel : afficher une snackbar d'erreur
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -228,7 +96,6 @@ class _RestaurantPageState extends State<RestaurantPage> {
         );
       }
 
-      // Données de fallback en cas d'erreur réseau
       setState(() {
         restaurants = [
           {
@@ -260,7 +127,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
             'localisation': 'Bamako, Mali',
             'ownerFirstName': 'Maria',
             'ownerLastName': 'Diakité',
-            'phone': '+223 12345678',
+            'phone': '+223 72345678',
             'plat': 'Plat du jour',
             'price': '2500',
             'quantity': 1,
@@ -276,15 +143,14 @@ class _RestaurantPageState extends State<RestaurantPage> {
 
   List<Map<String, dynamic>> get _filteredRestaurants {
     List<Map<String, dynamic>> result = restaurants.where((resto) {
-      final nameMatch = resto['nom'].toLowerCase().contains(_searchQuery.toLowerCase());
-      final locationMatch = resto['localisation'].toLowerCase().contains(_searchQuery.toLowerCase());
+      final nameMatch = (resto['nom'] ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
+      final locationMatch = (resto['localisation'] ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
       return nameMatch || locationMatch;
     }).toList();
 
     if (_selectedFilter == 1) {
       result.sort((a, b) => (b['rating'] ?? 0).compareTo(a['rating'] ?? 0));
     } else if (_selectedFilter == 2) {
-      // Simuler un tri par distance
       result.sort((a, b) => a['nom'].length.compareTo(b['nom'].length));
     }
 
@@ -370,36 +236,27 @@ class _RestaurantPageState extends State<RestaurantPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _filteredRestaurants.isEmpty
-                      ? const Center(child: Text('Aucun restaurant trouvé'))
-                      : ListView.builder(
-                          itemCount: _filteredRestaurants.length,
-                          itemBuilder: (context, index) {
-                            final restaurant = _filteredRestaurants[index];
-                            return _buildRestaurantCard(restaurant);
-                          },
-                        ),
+                  ? const Center(child: Text('Aucun restaurant trouvé'))
+                  : ListView.builder(
+                itemCount: _filteredRestaurants.length,
+                itemBuilder: (context, index) {
+                  final restaurant = _filteredRestaurants[index];
+                  return _buildRestaurantCard(restaurant);
+                },
+              ),
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final newRestaurant = await Navigator.push<Map<String, dynamic>>(
-            context,
-            MaterialPageRoute(builder: (_) => const AddRestaurantPage()),
-          );
-          if (newRestaurant != null) {
-            setState(() => restaurants.add(newRestaurant));
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text("Ajouter"),
-        backgroundColor: Colors.green,
       ),
     );
   }
 
   Widget _buildRestaurantCard(Map<String, dynamic> restaurant) {
+    // Vérifier si la carte du restaurant est null avant de la construire
+    if (restaurant == null) {
+      return const SizedBox.shrink(); // ou un widget d'erreur/placeholder
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
@@ -422,7 +279,8 @@ class _RestaurantPageState extends State<RestaurantPage> {
               child: AspectRatio(
                 aspectRatio: 16/9,
                 child: Image.network(
-                  restaurant['image'],
+                  // Utiliser l'opérateur de nullité ?? pour fournir une image par défaut
+                  restaurant['image'] ?? 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
@@ -448,7 +306,8 @@ class _RestaurantPageState extends State<RestaurantPage> {
                     children: [
                       Expanded(
                         child: Text(
-                          restaurant['nom'],
+                          // Utiliser l'opérateur de nullité ?? pour gérer les valeurs nulles
+                          restaurant['nom'] ?? 'Nom inconnu',
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -468,7 +327,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          restaurant['localisation'],
+                          restaurant['localisation'] ?? 'Localisation non disponible',
                           style: const TextStyle(color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -477,7 +336,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    restaurant['description'],
+                    restaurant['description'] ?? 'Description non disponible',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.grey[700]),
@@ -487,11 +346,11 @@ class _RestaurantPageState extends State<RestaurantPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Plat: ${restaurant['plat']}',
+                        'Plat: ${restaurant['plat'] ?? 'Standard'}',
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       Text(
-                        '${restaurant['price']} FCFA',
+                        '${restaurant['price'] ?? '0'} FCFA',
                         style: TextStyle(
                           color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.bold,

@@ -12,7 +12,7 @@ class _HotelPageState extends State<HotelPage> {
   final HotelService _hotelService = HotelService(); // Instance du service
   List<Map<String, dynamic>> hotels = [];
   bool isLoading = true; // Indicateur de chargement
-
+  int _selectedFilter = 0; // 0: Tous, 1: Populaires, 2: Proches
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -98,7 +98,7 @@ class _HotelPageState extends State<HotelPage> {
             'email': _getSafeString(hotel, 'email', 'Non disponible'),
             'description': _getSafeString(hotel, 'description', 'Description non disponible'),
             'room': _getSafeInt(hotel, 'room', 1),
-            'price': _getSafeString(hotel, 'price', _getSafeString(hotel, 'prix', '0')), // Support pour 'prix' aussi
+            'price': _getSafeString(hotel, 'price', _getSafeString(hotel, 'price', '0')), // Support pour 'prix' aussi
             'rating': _getSafeDouble(hotel, 'rating', 3.0), // Ajout du rating pour compatibilité
           };
         }).toList();
@@ -168,21 +168,67 @@ class _HotelPageState extends State<HotelPage> {
     }).toList();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-            "Hôtels Disponibles",
-             overflow: TextOverflow.ellipsis,
+          "Hôtels Disponibles",
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          IconButton(
+          /* IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               showSearch(
                 context: context,
                 delegate: HotelSearchDelegate(hotels: hotels),
+              );
+            },
+          ),*/
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (_) => Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Filtrer par', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      RadioListTile<int>(
+                        value: 0,
+                        groupValue: _selectedFilter,
+                        onChanged: (v) {
+                          setState(() => _selectedFilter = v!);
+                          Navigator.pop(context);
+                        },
+                        title: const Text('Tous les hotels'),
+                      ),
+                      RadioListTile<int>(
+                        value: 1,
+                        groupValue: _selectedFilter,
+                        onChanged: (v) {
+                          setState(() => _selectedFilter = v!);
+                          Navigator.pop(context);
+                        },
+                        title: const Text('Les plus populaires'),
+                      ),
+                      RadioListTile<int>(
+                        value: 2,
+                        groupValue: _selectedFilter,
+                        onChanged: (v) {
+                          setState(() => _selectedFilter = v!);
+                          Navigator.pop(context);
+                        },
+                        title: const Text('Les plus proches'),
+                      ),
+                    ],
+                  ),
+                ),
               );
             },
           ),
@@ -234,48 +280,6 @@ class _HotelPageState extends State<HotelPage> {
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final newHotel = await Navigator.push<Map<String, dynamic>>(
-            context,
-            MaterialPageRoute(builder: (_) => const AddHotelPage()),
-          );
-          if (newHotel != null) {
-            try {
-              // Ajouter l'hôtel via l'API
-              await _hotelService.addHotel(newHotel);
-              // Recharger la liste après ajout
-              await _loadHotels();
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Hôtel ajouté avec succès'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            } catch (e) {
-              // En cas d'erreur, ajouter localement quand même
-              setState(() {
-                hotels.add(newHotel);
-              });
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Hôtel ajouté localement (erreur serveur)'),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-              }
-            }
-          }
-        },
-        icon: const Icon(Icons.add_home_work),
-        label: const Text("Ajouter Hôtel"),
-        backgroundColor: Colors.blueAccent,
       ),
     );
   }

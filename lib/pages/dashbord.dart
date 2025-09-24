@@ -17,10 +17,10 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   bool isLoading = true;
   Map<String, int> stats = {
-    'hotels': 2,
-    'restaurants': 2,
-    'activities': 0,
-    'users': 4
+    'hotels': 4,
+    'restaurants': 4,
+    'activities': 5,
+    'users': 20
   };
   String searchQuery = '';
 

@@ -28,69 +28,6 @@ class ActiviteService {
     }
   }
 
-  /*Future<dynamic> addActivite(Map<String, dynamic> activiteData) async {
-    try {
-      return await _api.postData("api/activites", activiteData);
-    } catch (e) {
-      throw Exception("ActiviteService: Impossible d'ajouter l'activité: $e");
-    }
-  }*/
-
-/*
-  Future<dynamic> addActivite(Map<String, dynamic> activiteData) async {
-    try {
-      // Récupérer l'URL de base depuis ApiService
-      final fullUrl =   await _api.postData("api/activites", activiteData);
-
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse(fullUrl),
-      );
-
-      // Ajouter tous les champs sauf les images
-      activiteData.forEach((key, value) {
-        if (key != 'image' && key != 'imageBytes' && value != null) {
-          request.fields[key] = value.toString();
-        }
-      });
-
-      // Ajouter le fichier image
-      if (activiteData['image'] != null || activiteData['imageBytes'] != null) {
-        List<int> imageBytes;
-
-        if (activiteData['imageBytes'] != null) {
-          // Pour le web
-          imageBytes = activiteData['imageBytes'];
-        } else {
-          // Pour mobile
-          File image = activiteData['image'];
-          imageBytes = await image.readAsBytes();
-        }
-
-        var multipartFile = http.MultipartFile.fromBytes(
-          'image', // Nom du champ attendu par votre backend
-          imageBytes,
-          filename: 'activity_image.png',
-        );
-        request.files.add(multipartFile);
-      }
-
-
-      // Envoyer la requête
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Erreur ${response.statusCode}: ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Erreur lors de l\'envoi avec FormData: $e');
-    }
-  }
-*/
-
   Future<dynamic> addActivite(Map<String, dynamic> activiteData) async {
     try {
       final fullUrl = "${_api.baseUrl}/api/activites";

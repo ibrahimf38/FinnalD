@@ -20,9 +20,9 @@ class ApiService {
   ApiService() {
     // Configuration automatique selon la plateforme
     if (Platform.isAndroid) {
-      baseUrl = "http://192.168.188.100:8000"; // Émulateur Android
+      baseUrl = "http://192.168.188.98:8000"; // Émulateur Android
     } else if (Platform.isIOS) {
-      baseUrl = "http://192.168.188.100:8000"; // Émulateur iOS
+      baseUrl = "http://192.168.188.98:8000"; // Émulateur iOS
     } else {
       baseUrl = "http://localhost:8000"; // Desktop/Web
     }

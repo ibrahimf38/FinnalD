@@ -249,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         ],
       ),
       actions: [
-        IconButton(
+      /*  IconButton(
           icon: const Icon(Icons.refresh, color: Colors.white),
           onPressed: () {
             _loadUserData();
@@ -260,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               ),
             );
           },
-        ),
+        ),*/
         IconButton(
           icon: const Icon(Icons.search, color: Colors.white),
           onPressed: () {
