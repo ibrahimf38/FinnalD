@@ -819,20 +819,19 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
     _notesController.dispose();
     super.dispose();
   }
-}*/
+}
 
 
 
-
-
-
-import 'package:flutter/material.dart';
+*/import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../api/api_reservationService.dart'; // Assurez-vous que le chemin est correct
+import '../api/api_reservationService.dart';
 
 class HotelReservationPage extends StatefulWidget {
   final Map<String, dynamic> hotel;
+  final String? hotelId;
+
   final String? userName;
   final String? userPhone;
   final String? userEmail;
@@ -840,6 +839,7 @@ class HotelReservationPage extends StatefulWidget {
   const HotelReservationPage({
     super.key,
     required this.hotel,
+    this.hotelId,
     this.userName,
     this.userPhone,
     this.userEmail,
@@ -861,7 +861,7 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
   int _quantity = 1;
   bool _isLoading = false;
 
-  final _reservationService = ReservationService(); // Instance du service
+  final _reservationService = ReservationService();
 
   @override
   void initState() {
@@ -878,22 +878,24 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
   }
 
   int get _pricePerNight {
-    return int.tryParse(widget.hotel['price'].toString()) ?? 0;
+    return int.tryParse(widget.hotel['price']?.toString() ?? '0') ?? 0;
   }
 
   int get _totalNights {
     if (_checkInDate == null || _checkOutDate == null) return 0;
-    return _checkOutDate!.difference(_checkInDate!).inDays;
+    final difference = _checkOutDate!.difference(_checkInDate!).inDays;
+    return difference > 0 ? difference : 0;
   }
 
   int get _totalPrice {
-    return _pricePerNight * _quantity * (_totalNights == 0 ? 1 : _totalNights);
+    final nights = _totalNights == 0 ? 1 : _totalNights;
+    return _pricePerNight * _quantity * nights;
   }
 
   Future<void> _selectDate(BuildContext context, bool isCheckIn) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: isCheckIn ? _checkInDate ?? DateTime.now() : _checkOutDate ?? (_checkInDate?.add(const Duration(days: 1)) ?? DateTime.now().add(const Duration(days: 1))),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
@@ -923,7 +925,17 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
             _checkOutDate = null;
           }
         } else {
-          _checkOutDate = picked;
+          if (_checkInDate != null && picked.isBefore(_checkInDate!)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('La date de départ doit être après la date d\'arrivée'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            _checkOutDate = null;
+          } else {
+            _checkOutDate = picked;
+          }
         }
       });
     }
@@ -940,7 +952,7 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
       );
       return;
     }
-    if (!_checkInDate!.isBefore(_checkOutDate!)) {
+    if (_totalNights <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('La date de départ doit être après la date d\'arrivée'),
@@ -950,23 +962,34 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
       return;
     }
 
+    final hotelId = widget.hotelId ?? widget.hotel['id_hotel'] ?? widget.hotel['id'];
+
+    if (hotelId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID de l\'hôtel manquant. Impossible de réserver.'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
+    // MAPPING DES DONNÉES pour le back-end
     final reservationData = {
-      'hotel_name': widget.hotel['name'],
+      'id_hotel': hotelId, // Correspond à id_hotel dans le contrôleur Node.js
+      'date_reservation': _checkInDate!.toIso8601String(), // Correspond à date_reservation
+      'nbre_personne': _quantity, // Correspond à nbre_personne
+
+      'date_depart': _checkOutDate!.toIso8601String(), // Champ additionnel
       'user_name': _nameController.text,
-      'user_phone': _phoneController.text,
-      'user_email': _emailController.text,
-      'check_in_date': _checkInDate!.toIso8601String(),
-      'check_out_date': _checkOutDate!.toIso8601String(),
-      'quantity': _quantity,
-      'total_price': _totalPrice,
-      'notes': _notesController.text,
+      // ... autres champs non gérés par la base de données actuelle
     };
 
     try {
       final response = await _reservationService.addReservation(reservationData);
-      print('Réponse de l\'API: $response'); // Pour le débogage
 
       setState(() => _isLoading = false);
       _showConfirmationDialog();
@@ -974,12 +997,11 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur de réservation: $e'),
+          content: Text('Erreur de réservation: ${e.toString()}'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      print('Erreur lors de la réservation: $e');
     }
   }
 
@@ -1254,7 +1276,7 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
                   ),
                 ],
               ),
-              if (_checkInDate != null && _checkOutDate != null)
+              if (_checkInDate != null && _checkOutDate != null && _totalNights > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
@@ -1293,12 +1315,12 @@ class _HotelReservationPageState extends State<HotelReservationPage> {
                 ),
                 child: Column(
                   children: [
-                    if (_checkInDate != null && _checkOutDate != null)
+                    if (_checkInDate != null && _checkOutDate != null && _totalNights > 0)
                       _buildPriceDetailRow(
                         '${widget.hotel['price']} F x $_quantity chambre(s) x $_totalNights nuits',
                         '${_pricePerNight * _quantity * _totalNights} F',
                       ),
-                    if (_checkInDate == null || _checkOutDate == null)
+                    if (_checkInDate == null || _checkOutDate == null || _totalNights <= 0)
                       _buildPriceDetailRow(
                         '${widget.hotel['price']} F x $_quantity chambre(s) x 1 nuit',
                         '${_pricePerNight * _quantity} F',

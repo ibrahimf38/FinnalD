@@ -14,7 +14,6 @@ class HotelService {
     try {
       final data = await _api.getData("api/hotels");
 
-
       if (data is List) {
         return data;
       } else if (data is Map && data.containsKey('hotels')) {
@@ -29,14 +28,6 @@ class HotelService {
     }
   }
 
-  /*Future<dynamic> addHotel(Map<String, dynamic> hotelData) async {
-    try {
-      return await _api.postData("api/hotels", hotelData);
-    } catch (e) {
-      throw Exception("HotelService: Impossible d'ajouter l'hôtel: $e");
-    }
-  }*/
-
   Future<dynamic> addHotel(Map<String, dynamic> hotelData) async {
     try {
       final fullUrl = "${_api.baseUrl}/api/hotels";
@@ -47,7 +38,11 @@ class HotelService {
         Uri.parse(fullUrl),
       );
 
-      // Ajouter les champs de texte
+      // ====================================================================
+      // LOGIQUE CRITIQUE: Ajouter les champs de texte
+      // On s'assure d'EXCLURE la clé qui contient le fichier ('image' et 'imageBytes')
+      // Sinon, Flutter tente d'envoyer l'objet File ou les bytes comme un simple String.
+      // ====================================================================
       hotelData.forEach((key, value) {
         if (key != 'image' && key != 'imageBytes' && value != null) {
           request.fields[key] = value.toString();
@@ -55,9 +50,13 @@ class HotelService {
         }
       });
 
-      // Ajouter le fichier image avec le type de média explicite
+      // ====================================================================
+      // LOGIQUE CRITIQUE: Ajouter le fichier image
+      // On utilise la clé 'image' pour le fichier lui-même, conformément à
+      // l'attente de votre backend (souvent req.file.image ou similaire).
+      // ====================================================================
       if (hotelData['image'] != null) {
-        // Pour les plateformes mobiles
+        // 1. Gestion des plateformes mobiles (File)
         File imageFile = hotelData['image'];
         String filename = path.basename(imageFile.path);
 
@@ -65,25 +64,27 @@ class HotelService {
         final mediaType = MediaType('image', path.extension(filename).substring(1));
 
         var multipartFile = await http.MultipartFile.fromPath(
-          'image', // Nom du champ attendu par votre backend (req.file)
+          'image', // Nom du champ attendu par votre backend (très important!)
           imageFile.path,
           filename: filename,
-          contentType: mediaType, // ✅ L'ajout crucial
+          contentType: mediaType, // L'ajout crucial du type MIME
         );
         request.files.add(multipartFile);
         print('🖼️ Ajout du fichier image depuis le chemin: ${imageFile.path} avec type: $mediaType');
+
       } else if (hotelData['imageBytes'] != null) {
-        // Pour le web
+        // 2. Gestion du Web (Bytes)
         List<int> imageBytes = hotelData['imageBytes'];
         var multipartFile = http.MultipartFile.fromBytes(
-          'image', // Nom du champ attendu par votre backend (req.file)
+          'image', // Nom du champ attendu par votre backend
           imageBytes,
           filename: 'image_from_web.png', // Nom de fichier par défaut
-          contentType: MediaType('image', 'png'), // ✅ L'ajout crucial
+          contentType: MediaType('image', 'png'), // Type MIME pour le web
         );
         request.files.add(multipartFile);
         print('🖼️ Ajout des bytes de l\'image pour le web avec type: image/png');
       }
+
 
       // Envoyer la requête
       print('⏳ Envoi de la requête en cours...');

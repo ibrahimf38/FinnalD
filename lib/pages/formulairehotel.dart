@@ -637,7 +637,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/api_hotelService.dart';
 
 class AddHotelPage extends StatefulWidget {
-  const AddHotelPage({super.key});
+  const AddHotelPage({super.key, required Map<String, dynamic> initialData, required String docId});
 
   @override
   State<AddHotelPage> createState() => _AddHotelPageState();

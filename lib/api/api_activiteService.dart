@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -38,7 +39,7 @@ class ActiviteService {
         Uri.parse(fullUrl),
       );
 
-      // Ajouter les champs de texte
+      // CORRECTION: Ajouter les champs de texte en EXCLUANT les clés d'image
       activiteData.forEach((key, value) {
         if (key != 'image' && key != 'imageBytes' && value != null) {
           request.fields[key] = value.toString();
@@ -46,35 +47,36 @@ class ActiviteService {
         }
       });
 
-      // Ajouter le fichier image avec le type de média explicite
-      if (activiteData['image'] != null) {
-        // Pour les plateformes mobiles
+      // Ajouter le fichier image (Mobile/Desktop)
+      if (activiteData['image'] != null && activiteData['image'] is File) {
         File imageFile = activiteData['image'];
         String filename = path.basename(imageFile.path);
 
-        // Déterminer le type MIME de l'image
         final mediaType = MediaType('image', path.extension(filename).substring(1));
 
         var multipartFile = await http.MultipartFile.fromPath(
-          'image', // Nom du champ attendu par votre backend (req.file)
+          'image', // Nom du champ attendu par votre backend
           imageFile.path,
           filename: filename,
-          contentType: mediaType, // ✅ L'ajout crucial
+          contentType: mediaType,
         );
         request.files.add(multipartFile);
         print('🖼️ Ajout du fichier image depuis le chemin: ${imageFile.path} avec type: $mediaType');
-      } else if (activiteData['imageBytes'] != null) {
-        // Pour le web
+      }
+      // Ajouter les bytes de l'image (Web)
+      else if (activiteData['imageBytes'] != null && activiteData['imageBytes'] is List<int>) {
         List<int> imageBytes = activiteData['imageBytes'];
+
         var multipartFile = http.MultipartFile.fromBytes(
-          'image', // Nom du champ attendu par votre backend (req.file)
+          'image', // Nom du champ attendu par votre backend
           imageBytes,
-          filename: 'image_from_web.png', // Nom de fichier par défaut
-          contentType: MediaType('image', 'png'), // ✅ L'ajout crucial
+          filename: 'image_from_web.png',
+          contentType: MediaType('image', 'png'),
         );
         request.files.add(multipartFile);
         print('🖼️ Ajout des bytes de l\'image pour le web avec type: image/png');
       }
+
 
       // Envoyer la requête
       print('⏳ Envoi de la requête en cours...');
@@ -94,6 +96,7 @@ class ActiviteService {
     }
   }
 
+  // Assurez-vous d'avoir la méthode updateActivite (elle est partiellement visible dans votre code)
   Future<dynamic> updateActivite(String id, Map<String, dynamic> activiteData) async {
     try {
       return await _api.putData("api/activites/$id", activiteData);
@@ -102,11 +105,15 @@ class ActiviteService {
     }
   }
 
+// ➡️ CORRECTION POUR LA SUPPRESSION
   Future<void> deleteActivite(String id) async {
     try {
+      // L'endpoint DELETE doit correspondre à l'ID de l'activité
       await _api.deleteData("api/activites/$id");
     } catch (e) {
       throw Exception("ActiviteService: Impossible de supprimer l'activité: $e");
     }
   }
+
+
 }

@@ -761,7 +761,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/api_activiteService.dart';
 
 class AddActivityPage extends StatefulWidget {
-  const AddActivityPage({super.key});
+  const AddActivityPage({super.key, required Map<String, dynamic> initialData, required String docId});
 
   @override
   State<AddActivityPage> createState() => _AddActivityPageState();

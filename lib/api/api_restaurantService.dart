@@ -1,3 +1,4 @@
+
 import 'api_service.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
@@ -11,7 +12,6 @@ class RestaurantService {
   Future<List<dynamic>> getRestaurants() async {
     try {
       final data = await _api.getData("api/restaurants");
-
 
       if (data is List) {
         return data;
@@ -27,13 +27,6 @@ class RestaurantService {
     }
   }
 
-  /*Future<dynamic> addRestaurant(Map<String, dynamic> restaurantData) async {
-    try {
-      return await _api.postData("api/restaurants", restaurantData);
-    } catch (e) {
-      throw Exception("RestaurantService: Impossible d'ajouter le restaurant: $e");
-    }
-  }*/
   Future<dynamic> addRestaurant(Map<String, dynamic> restaurantData) async {
     try {
       final fullUrl = "${_api.baseUrl}/api/restaurants";
@@ -44,7 +37,7 @@ class RestaurantService {
         Uri.parse(fullUrl),
       );
 
-      // Ajouter les champs de texte
+      // CORRECTION: Ajouter les champs de texte en EXCLUANT les clés d'image
       restaurantData.forEach((key, value) {
         if (key != 'image' && key != 'imageBytes' && value != null) {
           request.fields[key] = value.toString();
@@ -52,31 +45,31 @@ class RestaurantService {
         }
       });
 
-      // Ajouter le fichier image avec le type de média explicite
-      if (restaurantData['image'] != null) {
-        // Pour les plateformes mobiles
+      // Ajouter le fichier image (Mobile/Desktop)
+      if (restaurantData['image'] != null && restaurantData['image'] is File) {
         File imageFile = restaurantData['image'];
         String filename = path.basename(imageFile.path);
 
-        // Déterminer le type MIME de l'image
         final mediaType = MediaType('image', path.extension(filename).substring(1));
 
         var multipartFile = await http.MultipartFile.fromPath(
-          'image', // Nom du champ attendu par votre backend (req.file)
+          'image', // Nom du champ attendu par votre backend
           imageFile.path,
           filename: filename,
-          contentType: mediaType, // ✅ L'ajout crucial
+          contentType: mediaType,
         );
         request.files.add(multipartFile);
         print('🖼️ Ajout du fichier image depuis le chemin: ${imageFile.path} avec type: $mediaType');
-      } else if (restaurantData['imageBytes'] != null) {
-        // Pour le web
+      }
+      // Ajouter les bytes de l'image (Web)
+      else if (restaurantData['imageBytes'] != null && restaurantData['imageBytes'] is List<int>) {
         List<int> imageBytes = restaurantData['imageBytes'];
+
         var multipartFile = http.MultipartFile.fromBytes(
-          'image', // Nom du champ attendu par votre backend (req.file)
+          'image', // Nom du champ attendu par votre backend
           imageBytes,
-          filename: 'image_from_web.png', // Nom de fichier par défaut
-          contentType: MediaType('image', 'png'), // ✅ L'ajout crucial
+          filename: 'image_from_web.png',
+          contentType: MediaType('image', 'png'),
         );
         request.files.add(multipartFile);
         print('🖼️ Ajout des bytes de l\'image pour le web avec type: image/png');

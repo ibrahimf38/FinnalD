@@ -1416,7 +1416,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/api_restaurantService.dart';
 
 class AddRestaurantPage extends StatefulWidget {
-  const AddRestaurantPage({super.key});
+  const AddRestaurantPage({super.key, required Map<String, dynamic> initialData, required String docId});
 
   @override
   State<AddRestaurantPage> createState() => _AddRestaurantPageState();

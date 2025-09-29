@@ -1,10 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:MaliDiscover/api/api_commandeService.dart';
+import 'package:flutter/material.dart';import 'package:flutter/material.dart';
+import 'package:MaliDiscover/api/api_service.dart';// Assurez-vous d'importer ApiService si nécessaire pour l'initialisation du service
 
 class RestaurantOrderPage extends StatefulWidget {
   final Map<String, dynamic> restaurant;
   final String? userName;
   final String? userPhone;
   final String? userEmail;
+  // TODO: Ajoutez ici l'ID du gestionnaire ou passez-le dans les arguments
+  final String? idGestionnaire;
 
   const RestaurantOrderPage({
     super.key,
@@ -12,6 +16,8 @@ class RestaurantOrderPage extends StatefulWidget {
     this.userName,
     this.userPhone,
     this.userEmail,
+    // Note: 'id_gestionnaire' n'est pas fourni dans les props, c'est un point à revoir
+    this.idGestionnaire = "ID_DEFAULT_GESTIONNAIRE", // À remplacer par le vrai ID
   });
 
   @override
@@ -20,6 +26,9 @@ class RestaurantOrderPage extends StatefulWidget {
 
 class _RestaurantOrderPageState extends State<RestaurantOrderPage> {
   final _formKey = GlobalKey<FormState>();
+  // 2. Initialisation du service
+  final CommandeService _commandeService = CommandeService();
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
@@ -27,10 +36,6 @@ class _RestaurantOrderPageState extends State<RestaurantOrderPage> {
   TimeOfDay? selectedTime;
   bool _isSubmitting = false;
 
-  // L'erreur "type 'Null' is not a subtype of type 'String'" se produit car les champs
-  // de formulaire ne sont pas initialisés.
-  // Correction: utiliser la méthode initState() pour pré-remplir les champs avec
-  // les données du profil si elles sont fournies.
   @override
   void initState() {
     super.initState();
@@ -40,11 +45,21 @@ class _RestaurantOrderPageState extends State<RestaurantOrderPage> {
     if (widget.userPhone != null) {
       phoneController.text = widget.userPhone!;
     }
+    // L'adresse pourrait aussi être pré-remplie si disponible
+  }
+
+  // Assurez-vous d'éliminer les contrôleurs
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    notesController.dispose();
+    addressController.dispose();
+    super.dispose();
   }
 
   int get totalPrice {
     int price = int.tryParse(widget.restaurant['price'].toString()) ?? 0;
-    // Correction: la quantité est maintenant une chaîne de caractères, il faut la convertir
     int quantity = int.tryParse(widget.restaurant['quantity'].toString()) ?? 0;
     return price * quantity;
   }
@@ -75,46 +90,71 @@ class _RestaurantOrderPageState extends State<RestaurantOrderPage> {
     }
 
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(seconds: 1)); // Simulation
 
-    if (!mounted) return;
+    // 3. Créer le Map de données pour l'API (s'assurer de la cohérence avec CommandeController.js)
+    final commandeData = {
+      // Les champs requis par CommandeController.js
+      'id_restaurant': widget.restaurant['id_restaurant'], // Doit correspondre à la clé du backend
+      'id_gestionnaire': widget.idGestionnaire, // ID du gestionnaire
+      'qte_commande': int.tryParse(widget.restaurant['quantity'].toString()) ?? 0, // Quantité totale commandée
 
-    final commande = {
-      'restaurantId': widget.restaurant['id_restaurant'],
-      'restaurantName': widget.restaurant['name'],
-      'plat': widget.restaurant['plat'],
-      'price': widget.restaurant['price'],
-      'quantity': widget.restaurant['quantity'],
-      'total': totalPrice,
+      // Données supplémentaires pour le contexte de la commande
       'clientName': nameController.text,
       'phone': phoneController.text,
       'address': addressController.text,
+      'total': totalPrice,
       'time': selectedTime!.format(context),
       'notes': notesController.text,
+      'plat_name': widget.restaurant['plat'], // Nom du plat
+      'price_per_unit': widget.restaurant['price'], // Prix unitaire
+
+      // date_commande sera générée par le backend si non fournie
+      // 'date_commande': DateTime.now().toIso8601String(), // Optionnel
     };
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Commande envoyée'),
-        content: const Text('Votre commande a été prise en compte.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // fermer dialog
-              Navigator.pop(context, commande); // renvoyer la commande
-            },
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
+    try {
+      // 4. Appel à l'API pour ajouter la commande
+      final response = await _commandeService.addCommande(commandeData);
+      print('Response API: $response');
 
-    setState(() => _isSubmitting = false);
+      if (!mounted) return;
+
+      // Créer l'objet à retourner à la page précédente
+      final commandeResult = {
+        ...commandeData,
+        'id_commande': response['id_commande'],
+      };
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Commande envoyée'),
+          content: Text('Votre commande a été prise en compte. ID: ${response['id_commande']}'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // fermer dialog
+                Navigator.pop(context, commandeResult); // renvoyer la commande
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Échec de l'envoi de la commande: $e")),
+      );
+    } finally {
+      setState(() => _isSubmitting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // ... Reste du code de build ...
     return Scaffold(
       appBar: AppBar(
         title: Text("Commander chez ${widget.restaurant['nom']}"),

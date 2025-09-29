@@ -1,4 +1,4 @@
-import 'dart:convert';
+/*import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
@@ -20,9 +20,9 @@ class ApiService {
   ApiService() {
     // Configuration automatique selon la plateforme
     if (Platform.isAndroid) {
-      baseUrl = "http://192.168.188.98:8000"; // Émulateur Android
+      baseUrl = "http://192.168.1.123:8000"; // Émulateur Android
     } else if (Platform.isIOS) {
-      baseUrl = "http://192.168.188.98:8000"; // Émulateur iOS
+      baseUrl = "http://192.168.1.123:8000"; // Émulateur iOS
     } else {
       baseUrl = "http://localhost:8000"; // Desktop/Web
     }
@@ -113,6 +113,137 @@ class ApiService {
 
       if (response.statusCode != 200) {
         throw Exception("Erreur DELETE: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Erreur de connexion DELETE: $e");
+    }
+  }
+}*/
+
+
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+
+class ApiService {
+  late String baseUrl;
+  // Stocke le jeton pour l'utiliser dans toutes les requêtes authentifiées
+  String? authToken;
+
+  ApiService() {
+    // Configuration automatique selon la plateforme
+    // ATTENTION: Assurez-vous que cette IP est celle de votre machine sur le réseau local
+    if (Platform.isAndroid) {
+      baseUrl = "http://192.168.188.98:8000";
+    } else if (Platform.isIOS) {
+      baseUrl = "http://192.168.188.98:8000";
+    } else {
+      baseUrl = "http://localhost:8000";
+    }
+    print('🔧 ApiService initialisé avec baseUrl: $baseUrl');
+  }
+
+  // Permet à l'application de définir le token après l'authentification de l'utilisateur
+  void setAuthToken(String token) {
+    authToken = token;
+  }
+
+  // Crée les headers, y compris le jeton d'authentification si disponible
+  Map<String, String> get _authHeaders => {
+    "Content-Type": "application/json",
+    if (authToken != null) "Authorization": "Bearer $authToken",
+  };
+
+
+  // GET avec logs détaillés
+  Future<dynamic> getData(String endpoint) async {
+    final fullUrl = "$baseUrl/$endpoint";
+    print('➡️ GET: $fullUrl');
+
+    try {
+      final response = await http.get(
+        Uri.parse(fullUrl),
+        headers: _authHeaders,
+      ).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        print('✅ Réponse GET réussie. Statut: 200');
+        return decodedData;
+      } else {
+        throw Exception("Erreur GET: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("Erreur de connexion GET: $e");
+    }
+  }
+
+  // POST avec logs (utilise désormais _authHeaders)
+  Future<dynamic> postData(String endpoint, Map<String, dynamic> data) async {
+    final fullUrl = "$baseUrl/$endpoint";
+    print('➡️ POST: $fullUrl');
+
+    try {
+      final response = await http.post(
+        Uri.parse(fullUrl),
+        headers: _authHeaders,
+        body: json.encode(data),
+      ).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedData = json.decode(response.body);
+        print('✅ Réponse POST réussie. Statut: ${response.statusCode}');
+        return decodedData;
+      } else {
+        String errorBody = response.body.isNotEmpty
+            ? json.decode(response.body)['error'] ?? json.decode(response.body)['message'] ?? response.body
+            : 'Erreur inconnue du serveur';
+        throw Exception("Erreur POST: ${response.statusCode} - $errorBody");
+      }
+    } catch (e) {
+      throw Exception("Erreur de connexion POST: $e");
+    }
+  }
+
+  // PUT avec logs (utilise désormais _authHeaders)
+  Future<dynamic> putData(String endpoint, Map<String, dynamic> data) async {
+    final fullUrl = "$baseUrl/$endpoint";
+    print('➡️ PUT: $fullUrl');
+
+    try {
+      final response = await http.put(
+        Uri.parse(fullUrl),
+        headers: _authHeaders,
+        body: json.encode(data),
+      ).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception("Erreur PUT: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Erreur de connexion PUT: $e");
+    }
+  }
+
+  // DELETE avec logs (utilise désormais _authHeaders)
+  Future<void> deleteData(String endpoint) async {
+    final fullUrl = "$baseUrl/$endpoint";
+    print('➡️ DELETE: $fullUrl');
+
+    try {
+      final response = await http.delete(
+        Uri.parse(fullUrl),
+        headers: _authHeaders,
+      ).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print('✅ Suppression réussie. Statut: ${response.statusCode}');
+        return;
+      } else {
+        throw Exception("Erreur DELETE: ${response.statusCode} - ${response.body}");
       }
     } catch (e) {
       throw Exception("Erreur de connexion DELETE: $e");
